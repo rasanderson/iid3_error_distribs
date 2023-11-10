@@ -1,0 +1,93 @@
+---
+title: "Comparing error distributions"
+format: html
+editor: source
+---
+
+## Comparing error distributions
+
+The problem. For count response data of the sort we're going to get in IID3 it's inevitable that they'll be overdispersed and a simple Poisson model will fail. In the past Steve and Roy have simply transformed the response using log(n+1), the +1 needed as you can't log zero. A number of papers, mainly in the animal ecology literature, is very critical of log(n+1) amd says it should be avoided. Here the same dataset, from IID2, is pushed through several similar models and error distributions compared.
+
+**Note**: When it comes to mixed models the non-INLA choice is primarily `nlme`, `lme4` and `glmmTMB`. Both `nlme` and `glmmTMB` can handle correlation structures such as AR1. `lme4` and `glmmmTMB` can handle several error structures. Only `glmmTMB` can handle multiple error structures and correlation structures in a mixed-effects framework.
+
+```{r}
+library(tidyr)
+library(dplyr)
+library(lattice)
+library(ggplot2)
+library(gridExtra)
+
+enum.data.tidy1 <- read.csv("data/Enumeration_Study_Tidy_Data.csv")
+
+glm.data <- enum.data.tidy1 %>%
+  group_by(cont_week) %>%
+  summarise(cases = sum(cases)) %>%
+  ungroup() %>%
+  mutate(sinwe=sin(cont_week*2*pi/52),
+         coswe=cos(cont_week*2*pi/52))
+``` 
+
+# OLS vs ML Gaussian errors, untransformed data
+This just compares `lm()` with `glm()`. Parameter estimates should be identical, but `lm()` uses OLS and `glm()` ML for parameter estimation.
+
+```{r}
+enum.lm1 <- lm(cases ~ cont_week + coswe + sinwe, data = glm.data)
+enum.glm1 <- glm(cases ~ cont_week + coswe + sinwe, data = glm.data, family = "gaussian")
+```
+
+ As expected, outputs identical. Check the residuals QQ plot for the GLM.
+ 
+```{r}
+par(mfrow = c(1,2))
+plot(enum.lm1, which = 2)
+plot(enum.glm1, which = 2)
+par(mfrow = c(1, 1))
+```
+ Surprisingly, the plots are not quite the same, though both are equally awful. However, the mean, min, max etc. of the two sets of residuals is identical.
+ 
+# OLS log (n+1) vs ML Gaussian errors with log link
+At first sight you might expect these to be the same, but they're not. The former users the log-transformation of the response, whereas the latter is on the log-transformation of the "Expected" value (typically shown with E in the statistics books)
+ 
+```{r}
+enum.lm2 <- lm(log(cases + 1) ~ cont_week + coswe + sinwe, data = glm.data)
+enum.glm2 <- glm(cases ~ cont_week + coswe + sinwe, data = glm.data, family = gaussian(link = "log"))
+par(mfrow = c(1,2))
+plot(enum.lm2, which = 2)
+plot(enum.glm2, which = 2)
+par(mfrow = c(1, 1))
+```
+ You would expect the two sets of QQ plots to look different here, and of course the actual residuals are not the same given 
+
+# OLS log (n+1) vs ML Poisson
+GLM with Poisson would be the standard one to use
+
+```{r}
+enum.glm3 <- glm(cases ~ cont_week + coswe + sinwe, data = glm.data, family = poisson)
+summary(enum.glm3)
+par(mfrow = c(1,2))
+plot(enum.lm2, which = 2)
+plot(enum.glm3, which = 2)
+par(mfrow = c(1, 1))
+
+```
+Poisson's QQ plot looks marginally better than the log(n+1) plot, but as expected the model is massively overdispersed with the residual deviance a couple of orders of magnitude bigger than the df.
+
+# Negative binomial
+I'm not going to bother with a quasi-Poisson as even Ulster would say 'no' to that one. Some authors recommend negative binomial, which if I've understood the literature properly (and I might not have done!) is actually a mixture distribution, allowing the Poisson mean to vary randomly following a Gamma distribution:
+
+```{r}
+library(MASS)
+enum.glm4 <- glm.nb(cases ~ cont_week + coswe + sinwe, data = glm.data,
+                    control = glm.control(maxit = 200))
+plot(enum.glm4, which = 2)
+```
+However, the AIC is roughly the same as the Poisson, so unconvinced this is much better.
+
+# Zero-inflated models
+As far as I can tell, there are two main types, zero-adjusted (hurdle) models, and zero-inflated models. I think it's the latter we want: essentially a binomial (case of iid or not) then a Poisson (how many iid). This requires use of glmmTMB.
+
+```{r}
+library(glmmTMB)
+
+```
+
