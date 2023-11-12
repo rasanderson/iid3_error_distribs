@@ -83,11 +83,53 @@ plot(enum.glm4, which = 2)
 ```
 However, the AIC is roughly the same as the Poisson, so unconvinced this is much better.
 
-# Zero-inflated models
-As far as I can tell, there are two main types, zero-adjusted (hurdle) models, and zero-inflated models. I think it's the latter we want: essentially a binomial (case of iid or not) then a Poisson (how many iid). This requires use of glmmTMB.
+# Negative binomial with glmmTMB
+This has two types of negative binomial `nbinom1` which has linear parameterization, 
+and `nbinom2` which has quadratic parameterization. Neither gives the same results
+as `glm.nb` (make of that what you will) and AIC scores much lower.
 
 ```{r}
 library(glmmTMB)
+enum.glm5 <- glmmTMB(cases ~ cont_week + coswe + sinwe, data = glm.data,
+                     zi = ~0,
+                     family = nbinom2)
+enum.glm6 <- glmmTMB(cases ~ cont_week + coswe + sinwe, data = glm.data,
+                     zi = ~0,
+                     family = nbinom2)
+summary(enum.glm5)
+summary(enum.glm6)
+library(DHARMa)
+enum.resid5 <- simulateResiduals(enum.glm5)
+enum.resid6 <- simulateResiduals(enum.glm6)
+plot(enum.resid5)
+plot(enum.resid6)
+```
+
+
+
+# Zero-inflated models
+As far as I can tell, there are two main types, zero-adjusted (hurdle) models, and zero-inflated models. In theory it's the latter we want: essentially a binomial (case of iid or not) then a Poisson (how many iid). Again requires glmmTMB. Using 
+cont_week only as the zero inflation parameter:
+
+```{r}
+enum.glm7 <- glmmTMB(cases ~ cont_week + coswe + sinwe, data = glm.data,
+                     zi = ~cont_week,
+                     family = nbinom2)
+enum.resid7 <- simulateResiduals(enum.glm7)
+plot(enum.resid7)
+```
+
+Here is the hurdle model for comparison
+
+```{r}
+enum.glm8 <- glmmTMB(cases ~ cont_week + coswe + sinwe, data = glm.data,
+                     zi = ~cont_week,
+                     family = truncated_nbinom2)
+enum.resid8 <- simulateResiduals(enum.glm8)
+plot(enum.resid8)
 
 ```
 
+# Conclusions
+Well all of these are pretty rubbish. But that's probably because they are all
+fixed-effects models. We really need GP and other levels in as random factors.
