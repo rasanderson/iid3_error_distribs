@@ -1,6 +1,6 @@
 ---
 title: "Comparing error distributions"
-format: html
+format: docx
 editor: source
 ---
 
@@ -16,6 +16,7 @@ library(dplyr)
 library(lattice)
 library(ggplot2)
 library(gridExtra)
+library(DHARMa)
 
 enum.data.tidy1 <- read.csv("data/Enumeration_Study_Tidy_Data.csv")
 

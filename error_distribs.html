@@ -127,80 +127,222 @@ Attaching package: 'gridExtra'</code></pre>
 
     combine</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>enum.data.tidy1 <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"data/Enumeration_Study_Tidy_Data.csv"</span>)</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>glm.data <span class="ot">&lt;-</span> enum.data.tidy1 <span class="sc">%&gt;%</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(cont_week) <span class="sc">%&gt;%</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">cases =</span> <span class="fu">sum</span>(cases)) <span class="sc">%&gt;%</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sinwe=</span><span class="fu">sin</span>(cont_week<span class="sc">*</span><span class="dv">2</span><span class="sc">*</span>pi<span class="sc">/</span><span class="dv">52</span>),</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">coswe=</span><span class="fu">cos</span>(cont_week<span class="sc">*</span><span class="dv">2</span><span class="sc">*</span>pi<span class="sc">/</span><span class="dv">52</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DHARMa)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>This is DHARMa 0.4.6. For overview type '?DHARMa'. For recent changes, type news(package = 'DHARMa')</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>enum.data.tidy1 <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"data/Enumeration_Study_Tidy_Data.csv"</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>glm.data <span class="ot">&lt;-</span> enum.data.tidy1 <span class="sc">%&gt;%</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(cont_week) <span class="sc">%&gt;%</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">cases =</span> <span class="fu">sum</span>(cases)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sinwe=</span><span class="fu">sin</span>(cont_week<span class="sc">*</span><span class="dv">2</span><span class="sc">*</span>pi<span class="sc">/</span><span class="dv">52</span>),</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">coswe=</span><span class="fu">cos</span>(cont_week<span class="sc">*</span><span class="dv">2</span><span class="sc">*</span>pi<span class="sc">/</span><span class="dv">52</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="ols-vs-ml-gaussian-errors-untransformed-data" class="level1">
 <h1>OLS vs ML Gaussian errors, untransformed data</h1>
 <p>This just compares <code>lm()</code> with <code>glm()</code>. Parameter estimates should be identical, but <code>lm()</code> uses OLS and <code>glm()</code> ML for parameter estimation.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>enum.lm1 <span class="ot">&lt;-</span> <span class="fu">lm</span>(cases <span class="sc">~</span> cont_week <span class="sc">+</span> coswe <span class="sc">+</span> sinwe, <span class="at">data =</span> glm.data)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(enum.lm1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Call:
-lm(formula = cases ~ cont_week + coswe + sinwe, data = glm.data)
-
-Residuals:
-    Min      1Q  Median      3Q     Max 
--43.207  -8.609   3.514  17.377  42.987 
-
-Coefficients:
-            Estimate Std. Error t value Pr(&gt;|t|)    
-(Intercept) 37.00654    5.54763   6.671 2.35e-09 ***
-cont_week    0.08374    0.09437   0.887   0.3773    
-coswe       -6.91798    3.47305  -1.992   0.0496 *  
-sinwe        4.02267    3.65395   1.101   0.2740    
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-Residual standard error: 23.37 on 86 degrees of freedom
-Multiple R-squared:  0.05892,   Adjusted R-squared:  0.02609 
-F-statistic: 1.795 on 3 and 86 DF,  p-value: 0.1542</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>enum.glm1 <span class="ot">&lt;-</span> <span class="fu">glm</span>(cases <span class="sc">~</span> cont_week <span class="sc">+</span> coswe <span class="sc">+</span> sinwe, <span class="at">data =</span> glm.data, <span class="at">family =</span> <span class="st">"gaussian"</span>)</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(enum.glm1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>
-Call:
-glm(formula = cases ~ cont_week + coswe + sinwe, family = "gaussian", 
-    data = glm.data)
-
-Coefficients:
-            Estimate Std. Error t value Pr(&gt;|t|)    
-(Intercept) 37.00654    5.54763   6.671 2.35e-09 ***
-cont_week    0.08374    0.09437   0.887   0.3773    
-coswe       -6.91798    3.47305  -1.992   0.0496 *  
-sinwe        4.02267    3.65395   1.101   0.2740    
----
-Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-
-(Dispersion parameter for gaussian family taken to be 546.1178)
-
-    Null deviance: 49907  on 89  degrees of freedom
-Residual deviance: 46966  on 86  degrees of freedom
-AIC: 828.57
-
-Number of Fisher Scoring iterations: 2</code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>enum.lm1 <span class="ot">&lt;-</span> <span class="fu">lm</span>(cases <span class="sc">~</span> cont_week <span class="sc">+</span> coswe <span class="sc">+</span> sinwe, <span class="at">data =</span> glm.data)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>enum.glm1 <span class="ot">&lt;-</span> <span class="fu">glm</span>(cases <span class="sc">~</span> cont_week <span class="sc">+</span> coswe <span class="sc">+</span> sinwe, <span class="at">data =</span> glm.data, <span class="at">family =</span> <span class="st">"gaussian"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>As expected, outputs identical. Check the residuals QQ plot for the GLM.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>lm.plt1 <span class="ot">&lt;-</span> <span class="fu">plot</span>(enum.lm1, <span class="at">which =</span> <span class="dv">2</span>)</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>glm.plt1 <span class="ot">&lt;-</span> <span class="fu">plot</span>(enum.glm1, <span class="at">which =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(enum.lm1, <span class="at">which =</span> <span class="dv">2</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(enum.glm1, <span class="at">which =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="error_distribs_files/figure-html/unnamed-chunk-6-1.png" class="img-fluid" width="672"></p>
 </div>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>Surprisingly, the plots are not quite the same, though both are equally awful. However, the mean, min, max etc. of the two sets of residuals is identical.</p>
+</section>
+<section id="ols-log-n1-vs-ml-gaussian-errors-with-log-link" class="level1">
+<h1>OLS log (n+1) vs ML Gaussian errors with log link</h1>
+<p>At first sight you might expect these to be the same, but they’re not. The former users the log-transformation of the response, whereas the latter is on the log-transformation of the “Expected” value (typically shown with E in the statistics books)</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>enum.lm2 <span class="ot">&lt;-</span> <span class="fu">lm</span>(<span class="fu">log</span>(cases <span class="sc">+</span> <span class="dv">1</span>) <span class="sc">~</span> cont_week <span class="sc">+</span> coswe <span class="sc">+</span> sinwe, <span class="at">data =</span> glm.data)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>enum.glm2 <span class="ot">&lt;-</span> <span class="fu">glm</span>(cases <span class="sc">~</span> cont_week <span class="sc">+</span> coswe <span class="sc">+</span> sinwe, <span class="at">data =</span> glm.data, <span class="at">family =</span> <span class="fu">gaussian</span>(<span class="at">link =</span> <span class="st">"log"</span>))</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(enum.lm2, <span class="at">which =</span> <span class="dv">2</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(enum.glm2, <span class="at">which =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="error_distribs_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>You would expect the two sets of QQ plots to look different here, and of course the actual residuals are not the same given</p>
+</section>
+<section id="ols-log-n1-vs-ml-poisson" class="level1">
+<h1>OLS log (n+1) vs ML Poisson</h1>
+<p>GLM with Poisson would be the standard one to use</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>enum.glm3 <span class="ot">&lt;-</span> <span class="fu">glm</span>(cases <span class="sc">~</span> cont_week <span class="sc">+</span> coswe <span class="sc">+</span> sinwe, <span class="at">data =</span> glm.data, <span class="at">family =</span> poisson)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(enum.glm3)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Call:
+glm(formula = cases ~ cont_week + coswe + sinwe, family = poisson, 
+    data = glm.data)
+
+Coefficients:
+              Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)  3.6101799  0.0375865  96.050  &lt; 2e-16 ***
+cont_week    0.0019763  0.0006245   3.165  0.00155 ** 
+coswe       -0.1666320  0.0232679  -7.161 7.98e-13 ***
+sinwe        0.0957665  0.0242443   3.950 7.81e-05 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+(Dispersion parameter for poisson family taken to be 1)
+
+    Null deviance: 1732.4  on 89  degrees of freedom
+Residual deviance: 1662.0  on 86  degrees of freedom
+AIC: 2125.9
+
+Number of Fisher Scoring iterations: 5</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(enum.lm2, <span class="at">which =</span> <span class="dv">2</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(enum.glm3, <span class="at">which =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="error_distribs_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow =</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">1</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Poisson’s QQ plot looks marginally better than the log(n+1) plot, but as expected the model is massively overdispersed with the residual deviance a couple of orders of magnitude bigger than the df.</p>
+</section>
+<section id="negative-binomial" class="level1">
+<h1>Negative binomial</h1>
+<p>I’m not going to bother with a quasi-Poisson as even Ulster would say ‘no’ to that one. Some authors recommend negative binomial, which if I’ve understood the literature properly (and I might not have done!) is actually a mixture distribution, allowing the Poisson mean to vary randomly following a Gamma distribution:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MASS)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'MASS'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following object is masked from 'package:dplyr':
+
+    select</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>enum.glm4 <span class="ot">&lt;-</span> <span class="fu">glm.nb</span>(cases <span class="sc">~</span> cont_week <span class="sc">+</span> coswe <span class="sc">+</span> sinwe, <span class="at">data =</span> glm.data,</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>                    <span class="at">control =</span> <span class="fu">glm.control</span>(<span class="at">maxit =</span> <span class="dv">200</span>))</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(enum.glm4, <span class="at">which =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="error_distribs_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>However, the AIC is roughly the same as the Poisson, so unconvinced this is much better.</p>
+</section>
+<section id="negative-binomial-with-glmmtmb" class="level1">
+<h1>Negative binomial with glmmTMB</h1>
+<p>This has two types of negative binomial <code>nbinom1</code> which has linear parameterization, and <code>nbinom2</code> which has quadratic parameterization. Neither gives the same results as <code>glm.nb</code> (make of that what you will) and AIC scores much lower.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(glmmTMB)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in checkMatrixPackageVersion(): Package version inconsistency detected.
+TMB was built with Matrix version 1.6.1.1
+Current Matrix version is 1.6.2
+Please re-install 'TMB' from source using install.packages('TMB', type = 'source') or ask CRAN for a binary version of 'TMB' matching CRAN's 'Matrix' package</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>enum.glm5 <span class="ot">&lt;-</span> <span class="fu">glmmTMB</span>(cases <span class="sc">~</span> cont_week <span class="sc">+</span> coswe <span class="sc">+</span> sinwe, <span class="at">data =</span> glm.data,</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">zi =</span> <span class="sc">~</span><span class="dv">0</span>,</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">family =</span> nbinom2)</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>enum.glm6 <span class="ot">&lt;-</span> <span class="fu">glmmTMB</span>(cases <span class="sc">~</span> cont_week <span class="sc">+</span> coswe <span class="sc">+</span> sinwe, <span class="at">data =</span> glm.data,</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>                     <span class="at">zi =</span> <span class="sc">~</span><span class="dv">0</span>,</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>                     <span class="at">family =</span> nbinom2)</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(enum.glm5)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: nbinom2  ( log )
+Formula:          cases ~ cont_week + coswe + sinwe
+Data: glm.data
+
+     AIC      BIC   logLik deviance df.resid 
+   861.4    873.9   -425.7    851.4       85 
+
+
+Dispersion parameter for nbinom2 family (): 1.22 
+
+Conditional model:
+             Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)  3.615399   0.283906  12.734   &lt;2e-16 ***
+cont_week    0.001913   0.005081   0.376    0.707    
+coswe       -0.156448   0.134031  -1.167    0.243    
+sinwe        0.063133   0.142896   0.442    0.659    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(enum.glm6)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> Family: nbinom2  ( log )
+Formula:          cases ~ cont_week + coswe + sinwe
+Data: glm.data
+
+     AIC      BIC   logLik deviance df.resid 
+   861.4    873.9   -425.7    851.4       85 
+
+
+Dispersion parameter for nbinom2 family (): 1.22 
+
+Conditional model:
+             Estimate Std. Error z value Pr(&gt;|z|)    
+(Intercept)  3.615399   0.283906  12.734   &lt;2e-16 ***
+cont_week    0.001913   0.005081   0.376    0.707    
+coswe       -0.156448   0.134031  -1.167    0.243    
+sinwe        0.063133   0.142896   0.442    0.659    
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DHARMa)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>enum.resid5 <span class="ot">&lt;-</span> <span class="fu">simulateResiduals</span>(enum.glm5)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>enum.resid6 <span class="ot">&lt;-</span> <span class="fu">simulateResiduals</span>(enum.glm6)</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(enum.resid5)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="error_distribs_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(enum.resid6)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="error_distribs_files/figure-html/unnamed-chunk-14-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="zero-inflated-models" class="level1">
+<h1>Zero-inflated models</h1>
+<p>As far as I can tell, there are two main types, zero-adjusted (hurdle) models, and zero-inflated models. In theory it’s the latter we want: essentially a binomial (case of iid or not) then a Poisson (how many iid). Again requires glmmTMB. Using cont_week only as the zero inflation parameter:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>enum.glm7 <span class="ot">&lt;-</span> <span class="fu">glmmTMB</span>(cases <span class="sc">~</span> cont_week <span class="sc">+</span> coswe <span class="sc">+</span> sinwe, <span class="at">data =</span> glm.data,</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">zi =</span> <span class="sc">~</span>cont_week,</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">family =</span> nbinom2)</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>enum.resid7 <span class="ot">&lt;-</span> <span class="fu">simulateResiduals</span>(enum.glm7)</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(enum.resid7)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="error_distribs_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Here is the hurdle model for comparison</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>enum.glm8 <span class="ot">&lt;-</span> <span class="fu">glmmTMB</span>(cases <span class="sc">~</span> cont_week <span class="sc">+</span> coswe <span class="sc">+</span> sinwe, <span class="at">data =</span> glm.data,</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>                     <span class="at">zi =</span> <span class="sc">~</span>cont_week,</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">family =</span> truncated_nbinom2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in finalizeTMB(TMBStruc, obj, fit, h, data.tmb.old): Model convergence
+problem; singular convergence (7). See vignette('troubleshooting'),
+help('diagnose')</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>enum.resid8 <span class="ot">&lt;-</span> <span class="fu">simulateResiduals</span>(enum.glm8)</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(enum.resid8)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="error_distribs_files/figure-html/unnamed-chunk-18-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="conclusions" class="level1">
+<h1>Conclusions</h1>
+<p>Well all of these are pretty rubbish. But that’s probably because they are all fixed-effects models. We really need GP and other levels in as random factors.</p>
 </section>
 
 </main>
