@@ -17,23 +17,26 @@ library(lattice)
 library(ggplot2)
 library(gridExtra)
 library(DHARMa)
+library(glmmTMB)
 
-enum.data.tidy1 <- read.csv("data/Enumeration_Study_Tidy_Data.csv")
+enum.data.tidy1 <- read.csv("data/Zero Inflated Case Data.csv")
+colnames(enum.data.tidy1)[1] <- "gp_practice"
 
-glm.data <- enum.data.tidy1 %>%
-  group_by(cont_week) %>%
-  summarise(cases = sum(cases)) %>%
-  ungroup() %>%
-  mutate(sinwe=sin(cont_week*2*pi/52),
-         coswe=cos(cont_week*2*pi/52))
+# glm.data <- enum.data.tidy1 %>%
+#   group_by(cont_week) %>%
+#   summarise(cases = sum(cases)) %>%
+#   ungroup() %>%
+#   mutate(sinwe=sin(cont_week*2*pi/52),
+#          coswe=cos(cont_week*2*pi/52))
 ``` 
 
-# OLS vs ML Gaussian errors, untransformed data
-This just compares `lm()` with `glm()`. Parameter estimates should be identical, but `lm()` uses OLS and `glm()` ML for parameter estimation.
+# Untransformed data
+All models are mixed-effects, as meaningless without GP.
+
 
 ```{r}
-enum.lm1 <- lm(cases ~ cont_week + coswe + sinwe, data = glm.data)
-enum.glm1 <- glm(cases ~ cont_week + coswe + sinwe, data = glm.data, family = "gaussian")
+library(nlme)
+enum.glm1 <- lme(cases ~ cont_week + coswe + sinwe, data = glm.data, family = "gaussian")
 ```
 
  As expected, outputs identical. Check the residuals QQ plot for the GLM.
