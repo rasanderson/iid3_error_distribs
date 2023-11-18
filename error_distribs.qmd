@@ -8,7 +8,9 @@ editor: source
 
 The problem. For count response data of the sort we're going to get in IID3 it's inevitable that they'll be overdispersed and a simple Poisson model will fail. In the past Steve and Roy have simply transformed the response using log(n+1), the +1 needed as you can't log zero. A number of papers, mainly in the animal ecology literature, is very critical of log(n+1) amd says it should be avoided. Here the same dataset, from IID2, is pushed through several similar models and error distributions compared.
 
-**Note**: When it comes to mixed models the non-INLA choice is primarily `nlme`, `lme4` and `glmmTMB`. Both `nlme` and `glmmTMB` can handle correlation structures such as AR1. `lme4` and `glmmmTMB` can handle several error structures. Only `glmmTMB` can handle multiple error structures and correlation structures in a mixed-effects framework.
+**Note**: When it comes to mixed models the non-INLA choice is primarily `nlme`, `lme4` and `glmmTMB`. Both `nlme` and `glmmTMB` can handle correlation structures such as AR1. `lme4` and `glmmmTMB` can handle several error structures. Only `glmmTMB` can handle multiple error structures and correlation structures in a mixed-effects framework. The following uses `glmmTMB` for all analyses, even where `nlme` would be fine, simply for ease of comparison of QQ plots. Model estimates for individual parameters are identical in `glmmTMB` and `nlme` for Gaussian models with no zero-inflation.
+
+All these models are mixed-effects, with GP practice as random effect, as fixed-effects models meaningless for the data.
 
 ```{r}
 library(tidyr)
@@ -18,10 +20,11 @@ library(ggplot2)
 library(gridExtra)
 library(DHARMa)
 library(glmmTMB)
+library(AICcmodavg)
 
 enum.data.tidy1 <- read.csv("data/Zero Inflated Case Data.csv")
 colnames(enum.data.tidy1)[1] <- "gp_practice"
-
+glm.data <- enum.data.tidy1
 # glm.data <- enum.data.tidy1 %>%
 #   group_by(cont_week) %>%
 #   summarise(cases = sum(cases)) %>%
@@ -31,109 +34,131 @@ colnames(enum.data.tidy1)[1] <- "gp_practice"
 ``` 
 
 # Untransformed data
-All models are mixed-effects, as meaningless without GP.
+Gaussian, no transformation of response, no zero-inflation.
 
 
 ```{r}
-library(nlme)
-enum.glm1 <- lme(cases ~ cont_week + coswe + sinwe, data = glm.data, family = "gaussian")
+enum.glm1 <- glmmTMB(cases ~ week + coswe + sinwe + (1 | gp_practice), zi=~0, data = glm.data)
+# summary(enum.glm1)
+enum.glm1.resid <- simulateResiduals(enum.glm1)
+plot(enum.glm1.resid)
+
 ```
 
- As expected, outputs identical. Check the residuals QQ plot for the GLM.
- 
-```{r}
-par(mfrow = c(1,2))
-plot(enum.lm1, which = 2)
-plot(enum.glm1, which = 2)
-par(mfrow = c(1, 1))
-```
- Surprisingly, the plots are not quite the same, though both are equally awful. However, the mean, min, max etc. of the two sets of residuals is identical.
- 
-# OLS log (n+1) vs ML Gaussian errors with log link
-At first sight you might expect these to be the same, but they're not. The former users the log-transformation of the response, whereas the latter is on the log-transformation of the "Expected" value (typically shown with E in the statistics books)
- 
-```{r}
-enum.lm2 <- lm(log(cases + 1) ~ cont_week + coswe + sinwe, data = glm.data)
-enum.glm2 <- glm(cases ~ cont_week + coswe + sinwe, data = glm.data, family = gaussian(link = "log"))
-par(mfrow = c(1,2))
-plot(enum.lm2, which = 2)
-plot(enum.glm2, which = 2)
-par(mfrow = c(1, 1))
-```
- You would expect the two sets of QQ plots to look different here, and of course the actual residuals are not the same given 
+Significant deviation
 
-# OLS log (n+1) vs ML Poisson
-GLM with Poisson would be the standard one to use
+# Log data cases + 1
+Originally had planned to compare `log(cases+1)` vs a mixed-effects model with `family=gaussian(link="log")`. The latter works fine for a fixed-effects model via `glm`, but fails for `lme4`-based methods. Thus the following is only for `log(cases+1`
 
 ```{r}
-enum.glm3 <- glm(cases ~ cont_week + coswe + sinwe, data = glm.data, family = poisson)
-summary(enum.glm3)
-par(mfrow = c(1,2))
-plot(enum.lm2, which = 2)
-plot(enum.glm3, which = 2)
-par(mfrow = c(1, 1))
+enum.glm2 <- glmmTMB(log(cases + 1) ~ week + coswe + sinwe + (1 | gp_practice), zi=~0, data = glm.data)
+#summary(enum.glm1)
+enum.glm2.resid <- simulateResiduals(enum.glm2)
+plot(enum.glm2.resid)
+```
+No obvious improvement over untransformed data.
+
+# Poisson errors
+The official way of doing it:
+
+```{r}
+enum.glm3 <- glmmTMB(cases ~ week + coswe + sinwe + (1 | gp_practice), zi=~0, data = glm.data, family = "poisson")
+enum.glm3.resid <- simulateResiduals(enum.glm3)
+#summary(enum.glm3)
+plot(enum.glm3.resid)
 
 ```
-Poisson's QQ plot looks marginally better than the log(n+1) plot, but as expected the model is massively overdispersed with the residual deviance a couple of orders of magnitude bigger than the df.
+
+Steve definitely won't like this, but Poisson errors are surprisingly good in this random-effects model. Note that Poisson error is dreadful on fixed-effect.
+
 
 # Negative binomial
-I'm not going to bother with a quasi-Poisson as even Ulster would say 'no' to that one. Some authors recommend negative binomial, which if I've understood the literature properly (and I might not have done!) is actually a mixture distribution, allowing the Poisson mean to vary randomly following a Gamma distribution:
+Some authors recommend negative binomial rather than simple Poisson, which if I've understood the literature properly (and I might not have done!) is actually a mixture distribution, allowing the Poisson mean to vary randomly following a Gamma distribution:
 
 ```{r}
-library(MASS)
-enum.glm4 <- glm.nb(cases ~ cont_week + coswe + sinwe, data = glm.data,
-                    control = glm.control(maxit = 200))
-plot(enum.glm4, which = 2)
+enum.glm4 <- glmmTMB(cases ~ week + coswe + sinwe + (1 | gp_practice), zi=~0, data = glm.data, family = "nbinom2")
+enum.glm4.resid <- simulateResiduals(enum.glm4)
+summary(enum.glm4)
+plot(enum.glm4.resid)
 ```
-However, the AIC is roughly the same as the Poisson, so unconvinced this is much better.
-
-# Negative binomial with glmmTMB
-This has two types of negative binomial `nbinom1` which has linear parameterization, 
-and `nbinom2` which has quadratic parameterization. Neither gives the same results
-as `glm.nb` (make of that what you will) and AIC scores much lower.
-
-```{r}
-library(glmmTMB)
-enum.glm5 <- glmmTMB(cases ~ cont_week + coswe + sinwe, data = glm.data,
-                     zi = ~0,
-                     family = nbinom2)
-enum.glm6 <- glmmTMB(cases ~ cont_week + coswe + sinwe, data = glm.data,
-                     zi = ~0,
-                     family = nbinom2)
-summary(enum.glm5)
-summary(enum.glm6)
-library(DHARMa)
-enum.resid5 <- simulateResiduals(enum.glm5)
-enum.resid6 <- simulateResiduals(enum.glm6)
-plot(enum.resid5)
-plot(enum.resid6)
-```
+QQ plot diagnostics fairly similar to Poisson, although AIC is lower at `r AIC(enum.glm3)` for Poisson, compared to `r AIC(enum.glm4)` for negative binomial.
 
 
 
 # Zero-inflated models
 As far as I can tell, there are two main types, zero-adjusted (hurdle) models, and zero-inflated models. In theory it's the latter we want: essentially a binomial (case of iid or not) then a Poisson (how many iid). Again requires glmmTMB. Using 
-cont_week only as the zero inflation parameter:
+cont_week only as the zero inflation parameter.
 
+## First a hurdle (zero-adjusted) model
+This is a truncated-Poisson hurdle model
 ```{r}
-enum.glm7 <- glmmTMB(cases ~ cont_week + coswe + sinwe, data = glm.data,
-                     zi = ~cont_week,
-                     family = nbinom2)
-enum.resid7 <- simulateResiduals(enum.glm7)
-plot(enum.resid7)
+enum.glm5 <- glmmTMB(cases ~ week + coswe + sinwe + (1 | gp_practice),
+                     zi=~1,
+                     data = glm.data, family = truncated_poisson)
+enum.glm5.resid <- simulateResiduals(enum.glm5)
+#summary(enum.glm5)
+plot(enum.glm5.resid)
 ```
 
-Here is the hurdle model for comparison
+and a truncated negative binomial
 
 ```{r}
-enum.glm8 <- glmmTMB(cases ~ cont_week + coswe + sinwe, data = glm.data,
-                     zi = ~cont_week,
-                     family = truncated_nbinom2)
-enum.resid8 <- simulateResiduals(enum.glm8)
-plot(enum.resid8)
+enum.glm6 <- glmmTMB(cases ~ week + coswe + sinwe + (1 | gp_practice),
+                     zi=~1,
+                     data = glm.data, family = truncated_nbinom2)
+enum.glm6.resid <- simulateResiduals(enum.glm6)
+#summary(enum.glm6)
+plot(enum.glm6.resid)
+```
 
+## Second, zero-inflated (mixture) models
+Zero-inflated Poisson
+```{r}
+enum.glm7 <- glmmTMB(cases ~ week + coswe + sinwe + (1 | gp_practice),
+                     zi=~1,
+                     data = glm.data, family = poisson)
+enum.glm7.resid <- simulateResiduals(enum.glm7)
+#summary(enum.glm7)
+plot(enum.glm7.resid)
+```
+
+and zero-inflated negative binomial:
+
+```{r}
+enum.glm8 <- glmmTMB(cases ~ week + coswe + sinwe + (1 | gp_practice),
+                     zi=~1,
+                     data = glm.data, family = nbinom2)
+enum.glm8.resid <- simulateResiduals(enum.glm8)
+#summary(enum.glm8)
+plot(enum.glm8.resid)
+```
+
+# The form of the data
+The "denominator" of our number of cases actually varies each week, as the number of GP practices changes. I guess that strictly-speaking this should be included as an offset. We also ignore any autocorrelation in the data. For example, including the number of GP practices as an offset, this needs to be logged, as Poisson by default uses a log-link function:
+
+```{r}
+enum.glm9 <- glmmTMB(cases ~ week + coswe + sinwe + offset(log(practice_recruitment)) + (1 | gp_practice),
+                     zi=~1,
+                     data = glm.data, family = nbinom2)
+enum.glm9.resid <- simulateResiduals(enum.glm9)
+#summary(enum.glm9)
+plot(enum.glm9.resid)
 ```
 
 # Conclusions
-Well all of these are pretty rubbish. But that's probably because they are all
-fixed-effects models. We really need GP and other levels in as random factors.
+The Poisson models (of different forms) perform surprisingly well, and better than log(cases+1), which wasn't anticipated. It is difficult to compare all the QQ plots, so some final insigts can be gained by comparing AIC scores:
+
+```{r echo=FALSE}
+cand.mod <- list()
+cand.mod[[1]] <- enum.glm3
+cand.mod[[2]] <- enum.glm4
+cand.mod[[3]] <- enum.glm5
+cand.mod[[4]] <- enum.glm6
+cand.mod[[5]] <- enum.glm7
+cand.mod[[6]] <- enum.glm8
+cand.mod[[7]] <- enum.glm9
+Modnames <- c("poisson", "negbinom", "hrdlpoiss", "hrdlnbinom", "zipoiss", "zinbinom", "zinbinom_off")
+aictab(cand.mod, modnames = Modnames)
+```
+
+Overall the negative binomial, and zero-inflated negative binomial have lowest AIC.
