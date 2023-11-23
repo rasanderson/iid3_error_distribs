@@ -22,7 +22,7 @@ library(DHARMa)
 library(glmmTMB)
 library(AICcmodavg)
 
-enum.data.tidy1 <- read.csv("data/Zero Inflated Case Data.csv")
+enum.data.tidy1 <- read.csv("data/Zero_Inflated_Case_Data.csv")
 colnames(enum.data.tidy1)[1] <- "gp_practice"
 glm.data <- enum.data.tidy1
 # glm.data <- enum.data.tidy1 %>%
