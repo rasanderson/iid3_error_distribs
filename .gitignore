@@ -48,5 +48,5 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
-*.docx
+error_distribs.docx
 *.html
